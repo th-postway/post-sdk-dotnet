@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{6C4D298B-81FB-2B6B-5AB6-46205EDDC72C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Postway", "libs\Postway\Postway.csproj", "{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|x64.Build.0 = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Debug|x86.Build.0 = Debug|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|x64.ActiveCfg = Release|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|x64.Build.0 = Release|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|x86.ActiveCfg = Release|Any CPU
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A11A8F9B-380A-49FC-80F8-2D1110B0F95A} = {6C4D298B-81FB-2B6B-5AB6-46205EDDC72C}
+	EndGlobalSection
+EndGlobal
