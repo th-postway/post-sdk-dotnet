@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Postway.Extensions;
 
 namespace Postway.Libraries;
 
@@ -43,7 +44,7 @@ public class HttpClientService : IHttpClientService, IDisposable
 
             // read and deserialize response
             var strJson = await response.Content.ReadAsStringAsync();
-            result = JsonSerializer.Deserialize<T>(strJson);
+            result = strJson.FromJson<T>();
         }
         catch (HttpRequestException)
         {
@@ -67,11 +68,12 @@ public class HttpClientService : IHttpClientService, IDisposable
 
             // Post request
             using var response = await httpClient.PostAsync(url, content);
+
             // Ensure the response indicates success
             response.EnsureSuccessStatusCode();
 
             var strJson = await response.Content.ReadAsStringAsync();
-            result = JsonSerializer.Deserialize<T>(strJson);
+            result = strJson.FromJson<T>();
         }
         catch (HttpRequestException)
         {
@@ -95,12 +97,13 @@ public class HttpClientService : IHttpClientService, IDisposable
 
             // Put request
             using var response = await httpClient.PutAsync(url, content);
+
             // Ensure the response indicates success
             response.EnsureSuccessStatusCode();
 
             // Read and deserialize response
             var strJson = await response.Content.ReadAsStringAsync();
-            result = JsonSerializer.Deserialize<T>(strJson);
+            result = strJson.FromJson<T>();
         }
         catch (HttpRequestException)
         {
@@ -121,12 +124,13 @@ public class HttpClientService : IHttpClientService, IDisposable
             using var httpClient = new HttpClient();
             // Delete request
             using var response = await httpClient.DeleteAsync(url);
+
             // Ensure the response indicates success
             response.EnsureSuccessStatusCode();
 
             // Read and deserialize response
             var strJson = await response.Content.ReadAsStringAsync();
-            result = JsonSerializer.Deserialize<T>(strJson);
+            result = strJson.FromJson<T>();
         }
         catch (HttpRequestException)
         {

@@ -1,5 +1,5 @@
 using System.Text;
-using System.Text.Json;
+using Postway.Extensions;
 using Postway.Libraries;
 using Postway.ViewModels.Auths;
 using Postway.ViewModels.Labels;
@@ -63,7 +63,7 @@ public class Post : IPost
         };
 
         // Serialize the request object to JSON
-        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
 
         // Make the POST request
         var response = await _httpClientService.PostAsync<OrderShipmentResponse>(url, content, headers);
