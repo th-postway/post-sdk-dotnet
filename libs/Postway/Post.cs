@@ -38,7 +38,12 @@ public class Post : IPost
             { "Authorization", $"Bearer {_accessToken}" },
             { "Content-Type", "application/json" }
         };
-        var response = await _httpClientService.GetAsync<AccountInfoResponse>(url, headers);
+        
+        // Create an empty content object for the request
+        var content = new StringContent("", Encoding.UTF8, "application/json");
+
+        // Make the POST request
+        var response = await _httpClientService.PostAsync<AccountInfoResponse>(url, content, headers);
         if (response == null)
         {
             throw new Exception("Failed to retrieve account information.");
