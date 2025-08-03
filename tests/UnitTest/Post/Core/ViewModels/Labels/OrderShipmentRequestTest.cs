@@ -1,7 +1,7 @@
-using Postway.CONST;
-using Postway.ViewModels.Labels;
+using Postway.Core.CONST;
+using Postway.Core.ViewModels.Labels;
 
-namespace Postway.UnitTest.Post.ViewModels.Labels;
+namespace Postway.UnitTest.Post.Core.ViewModels.Labels;
 
 public class OrderShipmentRequestTest
 {

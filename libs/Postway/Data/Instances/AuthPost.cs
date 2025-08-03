@@ -1,46 +1,45 @@
-using Postway.Libraries;
-using Postway.ViewModels.Auths;
+using Postway.Core.ViewModels.Auths;
+using Postway.Data.Services;
 
-namespace Postway
+namespace Postway.Data.Instances;
+
+public interface IAuthPost : IDisposable
 {
-    public interface IAuthPost : IDisposable
+    Task<AccountInfoResponse> AccountInfo();
+}
+
+internal class AuthPost : IAuthPost
+{
+    private readonly string _accessToken;
+    private readonly string _baseUrl;
+    private readonly IHttpClientService _httpClientService;
+
+    public AuthPost(string accessToken, string baseUrl, IHttpClientService httpClientService)
     {
-        Task<AccountInfoResponse> AccountInfo();
+        _baseUrl = baseUrl;
+        _httpClientService = httpClientService;
+        _accessToken = accessToken;
     }
 
-    internal class AuthPost : IAuthPost
+    public async Task<AccountInfoResponse> AccountInfo()
     {
-        private readonly string _accessToken;
-        private readonly string _baseUrl;
-        private readonly IHttpClientService _httpClientService;
-
-        public AuthPost(string accessToken, string baseUrl, IHttpClientService httpClientService)
+        var url = $"{_baseUrl}/auth/account/info";
+        var headers = new Dictionary<string, string>
         {
-            _baseUrl = baseUrl;
-            _httpClientService = httpClientService;
-            _accessToken = accessToken;
+            { "Authorization", $"Bearer {_accessToken}" },
+            { "Content-Type", "application/json" }
+        };
+
+        var response = await _httpClientService.GetAsync<AccountInfoResponse>(url, headers);
+        if (response == null)
+        {
+            throw new Exception("Failed to retrieve account information.");
         }
 
-        public async Task<AccountInfoResponse> AccountInfo()
-        {
-            var url = $"{_baseUrl}/auth/account/info";
-            var headers = new Dictionary<string, string>
-            {
-                { "Authorization", $"Bearer {_accessToken}" },
-                { "Content-Type", "application/json" }
-            };
+        return response;
+    }
 
-            var response = await _httpClientService.GetAsync<AccountInfoResponse>(url, headers);
-            if (response == null)
-            {
-                throw new Exception("Failed to retrieve account information.");
-            }
-
-            return response;
-        }
-
-        public void Dispose()
-        {
-        }
+    public void Dispose()
+    {
     }
 }

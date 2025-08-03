@@ -1,16 +1,16 @@
 using System.Text;
-using Postway.Extensions;
-using Postway.Libraries;
-using Postway.ViewModels.Labels;
+using Postway.Core.Extensions;
+using Postway.Core.ViewModels.Labels;
+using Postway.Data.Services;
 
-namespace Postway;
+namespace Postway.Data.Instances;
 
 public interface ILabelPost : IDisposable
 {
     Task<OrderShipmentResponse> OrderShipment(OrderShipmentRequest request);
 }
 
-public class LabelPost : ILabelPost
+internal class LabelPost : ILabelPost
 {
     private readonly string _accessToken;
     private readonly string _baseUrl;
@@ -34,7 +34,7 @@ public class LabelPost : ILabelPost
         };
 
         // Serialize the request object to JSON
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
+        using var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
 
         // Make the POST request
         var response = await _httpClientService.PostAsync<OrderShipmentResponse>(url, content, headers);

@@ -1,4 +1,4 @@
-namespace Postway.ViewModels.Auths;
+namespace Postway.Core.ViewModels.Auths;
 
 public class AccountInfoResponse
 {

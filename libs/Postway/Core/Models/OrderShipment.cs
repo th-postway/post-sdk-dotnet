@@ -1,4 +1,4 @@
-namespace Postway.Models;
+namespace Postway.Core.Models;
 
 public class OrderShipment
 {

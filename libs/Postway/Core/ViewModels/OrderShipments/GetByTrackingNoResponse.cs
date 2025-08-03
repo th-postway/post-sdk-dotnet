@@ -1,6 +1,6 @@
-using Postway.Models;
+using Postway.Core.Models;
 
-namespace Postway.ViewModels.OrderShipments;
+namespace Postway.Core.ViewModels.OrderShipments;
 
 public class GetByTrackingNoResponse : OrderShipment
 {

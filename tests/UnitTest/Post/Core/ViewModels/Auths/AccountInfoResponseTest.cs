@@ -1,6 +1,6 @@
-using Postway.ViewModels.Auths;
+using Postway.Core.ViewModels.Auths;
 
-namespace Postway.UnitTest.Post.ViewModels.Auths;
+namespace Postway.UnitTest.Post.Core.ViewModels.Auths;
 
 public class AccountInfoResponseTest
 {

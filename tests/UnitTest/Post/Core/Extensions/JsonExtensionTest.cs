@@ -1,6 +1,6 @@
-﻿using Postway.Extensions;
+﻿using Postway.Core.Extensions;
 
-namespace Postway.UnitTest.Post.Extensions;
+namespace Postway.UnitTest.Post.Core.Extensions;
 
 public class JsonExtensionTest
 {

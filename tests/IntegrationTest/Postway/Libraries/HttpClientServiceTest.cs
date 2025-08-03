@@ -1,4 +1,4 @@
-﻿using Postway.Libraries;
+﻿using Postway.Data.Services;
 
 namespace Postway.IntegrationTest.Postway.Libraries;
 

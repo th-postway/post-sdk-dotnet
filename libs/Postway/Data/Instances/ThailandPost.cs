@@ -1,16 +1,16 @@
 using System.Text;
-using Postway.Extensions;
-using Postway.Libraries;
-using Postway.ViewModels.Thailands;
+using Postway.Core.Extensions;
+using Postway.Core.ViewModels.Thailands;
+using Postway.Data.Services;
 
-namespace Postway;
+namespace Postway.Data.Instances;
 
 public interface IThailandPost : IDisposable
 {
     Task<FilterResponse> Filter(FilterRequest request);
 }
 
-public class ThailandPost : IThailandPost
+internal class ThailandPost : IThailandPost
 {
     private readonly string _accessToken;
     private readonly string _baseUrl;
@@ -32,7 +32,7 @@ public class ThailandPost : IThailandPost
             { "Content-Type", "application/json" },
         };
 
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
+        using var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
         var response = await _httpClientService.PostAsync<FilterResponse>(url, content, headers);
         if (response == null)
         {

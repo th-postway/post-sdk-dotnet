@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace Postway.Extensions;
+namespace Postway.Core.Extensions;
 
 public static class JsonExtension
 {

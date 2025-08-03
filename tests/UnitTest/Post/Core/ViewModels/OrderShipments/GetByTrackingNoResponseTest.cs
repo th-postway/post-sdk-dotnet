@@ -1,6 +1,6 @@
-using Postway.ViewModels.OrderShipments;
+using Postway.Core.ViewModels.OrderShipments;
 
-namespace Postway.UnitTest.Post.ViewModels.OrderShipments;
+namespace Postway.UnitTest.Post.Core.ViewModels.OrderShipments;
 
 public class GetByTrackingNoResponseTest
 {
@@ -30,7 +30,7 @@ public class GetByTrackingNoResponseTest
     [Fact]
     public void Sender_DefaultValues_AreCorrect()
     {
-        var sender = new GetByTrackingNoResponse.Sender();
+        var sender = new Postway.Core.Models.OrderShipment.Sender();
         Assert.Equal("", sender.fullname);
         Assert.Equal("", sender.mobile_phone);
         Assert.Equal("", sender.address);
@@ -43,7 +43,7 @@ public class GetByTrackingNoResponseTest
     [Fact]
     public void Recipient_DefaultValues_AreCorrect()
     {
-        var recipient = new GetByTrackingNoResponse.Recipient();
+        var recipient = new Postway.Core.Models.OrderShipment.Recipient();
         Assert.Equal("", recipient.fullname);
         Assert.Equal("", recipient.mobile_phone);
         Assert.Equal("", recipient.address);
@@ -56,7 +56,7 @@ public class GetByTrackingNoResponseTest
     [Fact]
     public void Package_DefaultValues_AreCorrect()
     {
-        var package = new GetByTrackingNoResponse.Package();
+        var package = new Postway.Core.Models.OrderShipment.Package();
         Assert.Equal("", package.my_tracking_no);
         Assert.Equal("", package.tracking_no);
         Assert.Equal("", package.ref1);

@@ -1,7 +1,7 @@
-using Postway.Libraries;
-using Postway.ViewModels.ShipmentProviders;
+using Postway.Core.ViewModels.ShipmentProviders;
+using Postway.Data.Services;
 
-namespace Postway;
+namespace Postway.Data.Instances;
 
 public interface IShipmentProviderPost : IDisposable
 {

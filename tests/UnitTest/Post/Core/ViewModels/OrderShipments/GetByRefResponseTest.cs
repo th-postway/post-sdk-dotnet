@@ -1,6 +1,6 @@
-using Postway.ViewModels.OrderShipments;
+using Postway.Core.ViewModels.OrderShipments;
 
-namespace Postway.UnitTest.Post.ViewModels.OrderShipments;
+namespace Postway.UnitTest.Post.Core.ViewModels.OrderShipments;
 
 public class GetByRefResponseTest
 {
@@ -23,7 +23,7 @@ public class GetByRefResponseTest
     [Fact]
     public void Sender_DefaultValues_AreCorrect()
     {
-        var sender = new GetByRefResponse.Sender();
+        var sender = new Postway.Core.Models.OrderShipment.Sender();
         Assert.Equal("", sender.fullname);
         Assert.Equal("", sender.mobile_phone);
         Assert.Equal("", sender.address);
@@ -36,7 +36,7 @@ public class GetByRefResponseTest
     [Fact]
     public void Recipient_DefaultValues_AreCorrect()
     {
-        var recipient = new GetByRefResponse.Recipient();
+        var recipient = new Postway.Core.Models.OrderShipment.Recipient();
         Assert.Equal("", recipient.fullname);
         Assert.Equal("", recipient.mobile_phone);
         Assert.Equal("", recipient.address);
@@ -49,7 +49,7 @@ public class GetByRefResponseTest
     [Fact]
     public void Package_DefaultValues_AreCorrect()
     {
-        var package = new GetByRefResponse.Package();
+        var package = new Postway.Core.Models.OrderShipment.Package();
         Assert.Equal("", package.my_tracking_no);
         Assert.Equal("", package.tracking_no);
         Assert.Equal("", package.ref1);
@@ -73,9 +73,9 @@ public class GetByRefResponseTest
             in_transit_at = DateTime.Now.AddHours(-1),
             created_at = DateTime.Today,
             updated_at = DateTime.Today.AddDays(1),
-            sender = new GetByRefResponse.Sender { fullname = "Sender Name" },
-            recipient = new GetByRefResponse.Recipient { fullname = "Recipient Name" },
-            package = new GetByRefResponse.Package { my_tracking_no = "123" }
+            sender = new Postway.Core.Models.OrderShipment.Sender { fullname = "Sender Name" },
+            recipient = new Postway.Core.Models.OrderShipment.Recipient { fullname = "Recipient Name" },
+            package = new Postway.Core.Models.OrderShipment.Package { my_tracking_no = "123" }
         };
         Assert.Equal("testChannel", response.channel);
         Assert.Equal("delivered", response.order_shipment_status);

@@ -1,4 +1,4 @@
-namespace Postway.ViewModels.Thailands;
+namespace Postway.Core.ViewModels.Thailands;
 
 public class FilterResponse
 {

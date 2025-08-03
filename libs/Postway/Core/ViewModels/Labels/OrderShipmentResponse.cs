@@ -1,4 +1,4 @@
-namespace Postway.ViewModels.Labels;
+namespace Postway.Core.ViewModels.Labels;
 
 public class OrderShipmentResponse
 {

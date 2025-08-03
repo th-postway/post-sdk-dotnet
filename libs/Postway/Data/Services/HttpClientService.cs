@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Postway.Extensions;
+using Postway.Core.Extensions;
 
-namespace Postway.Libraries;
+namespace Postway.Data.Services;
 
 public interface IHttpClientService : IDisposable
 {

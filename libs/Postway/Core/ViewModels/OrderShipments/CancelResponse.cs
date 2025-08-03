@@ -1,4 +1,4 @@
-namespace Postway.ViewModels.OrderShipments;
+namespace Postway.Core.ViewModels.OrderShipments;
 
 public class CancelResponse
 {

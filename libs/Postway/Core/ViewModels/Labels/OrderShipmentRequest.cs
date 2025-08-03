@@ -1,6 +1,6 @@
-using Postway.CONST;
+using Postway.Core.CONST;
 
-namespace Postway.ViewModels.Labels;
+namespace Postway.Core.ViewModels.Labels;
 
 public class OrderShipmentRequest
 {

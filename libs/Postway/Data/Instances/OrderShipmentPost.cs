@@ -1,9 +1,9 @@
 using System.Text;
-using Postway.Extensions;
-using Postway.Libraries;
-using Postway.ViewModels.OrderShipments;
+using Postway.Core.Extensions;
+using Postway.Core.ViewModels.OrderShipments;
+using Postway.Data.Services;
 
-namespace Postway;
+namespace Postway.Data.Instances;
 
 public interface IOrderShipmentPost : IDisposable
 {
@@ -92,7 +92,7 @@ internal class OrderShipmentPost : IOrderShipmentPost
             { "Content-Type", "application/json" }
         };
 
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
+        using var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
         var response = await _httpClientService.PostAsync<CreateResponse>(url, content, headers);
         if (response == null)
         {
@@ -111,12 +111,12 @@ internal class OrderShipmentPost : IOrderShipmentPost
             { "Content-Type", "application/json" }
         };
 
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
+        using var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
         var response = await _httpClientService.PostAsync<CalculatePriceResponse>(url, content, headers);
         if (response == null)
         {
             throw new Exception("Failed to calculate order shipment price.");
-    }
+        }
 
         return response;
     }
@@ -130,7 +130,7 @@ internal class OrderShipmentPost : IOrderShipmentPost
             { "Content-Type", "application/json" }
         };
 
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
+        using var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
         var response = await _httpClientService.PostAsync<CancelResponse>(url, content, headers);
         if (response == null)
         {
