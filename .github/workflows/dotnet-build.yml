@@ -19,6 +19,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Postway.sln
       - name: Build solution
-        run: dotnet build Postway.sln --configuration Release --no-restore
+        run: dotnet build Postway.sln --configuration Debug --no-restore
       - name: Run tests
         run: dotnet test Postway.sln --no-build --verbosity normal
+      - name: Build with release configuration
+        run: |
+          dotnet build Postway.sln --configuration Release --no-restore
+          echo "Build and publish completed successfully."
