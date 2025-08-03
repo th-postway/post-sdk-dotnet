@@ -25,4 +25,5 @@ jobs:
       - name: Build with release configuration
         run: |
           dotnet build Postway.sln --configuration Release --no-restore
+          dotnet publish libs/Postway/Postway.csproj --configuration Release --output ./artifacts --no-build --no-restore
           echo "Build and publish completed successfully."
