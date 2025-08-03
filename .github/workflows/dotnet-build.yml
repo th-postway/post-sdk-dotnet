@@ -18,7 +18,7 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
         run: dotnet restore Postway.sln
-      - name: Build solution
+      - name: Build solution for testing
         run: dotnet build Postway.sln --configuration Debug --no-restore
       - name: Run tests
         run: dotnet test Postway.sln --no-build --verbosity normal
