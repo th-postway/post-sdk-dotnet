@@ -1,6 +1,6 @@
-namespace Postway.ViewModels.OrderShipments;
+namespace Postway.Models;
 
-public class GetByRefResponse
+public class OrderShipment
 {
     public string channel { get; set; } = "";
     public Sender sender { get; set; } = new Sender();

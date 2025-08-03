@@ -1,119 +1,48 @@
-using System.Text;
-using Postway.Extensions;
 using Postway.Libraries;
-using Postway.ViewModels.Auths;
-using Postway.ViewModels.Labels;
-using Postway.ViewModels.OrderShipments;
 
 namespace Postway;
 
 public interface IPost : IDisposable
 {
-    Task<AccountInfoResponse> Auth_AccountInfo();
-    Task<OrderShipmentResponse> Label_OrderShipment(OrderShipmentRequest request);
-    Task<GetByTrackingNoResponse> OrderShipment_GetByTrackingNo(string trackingNo);
-    Task<GetByRefResponse> OrderShipment_GetByRef(string refNo);
+    IAuthPost Auth { get; }
+    ILabelPost Label { get; }
+    IOrderShipmentPost OrderShipment { get; }
+    IShipmentProviderPost ShipmentProvider { get; }
+    IThailandPost Thailand { get; }
 }
 
 public class Post : IPost
 {
     private readonly string _accessToken;
-
+    private readonly string _baseUrl;
     private readonly IHttpClientService _httpClientService;
-    private readonly string _baseUrl = "https://post.postway.co.th/merchant";
+
+    public IAuthPost Auth { get; }
+    public ILabelPost Label { get; }
+    public IOrderShipmentPost OrderShipment { get; }
+    public IShipmentProviderPost ShipmentProvider { get; }
+    public IThailandPost Thailand { get; }
 
     public Post(string accessToken)
     {
         _accessToken = accessToken;
+        _baseUrl = "https://post.postway.co.th/merchant";
         _httpClientService = new HttpClientService();
-    }
 
-    public async Task<AccountInfoResponse> Auth_AccountInfo()
-    {
-        var url = $"{_baseUrl}/auth/account/info";
-
-        var headers = new Dictionary<string, string>
-        {
-            { "Accept", "*/*" },
-            { "Authorization", $"Bearer {_accessToken}" },
-            { "Content-Type", "application/json" }
-        };
-        
-        // Create an empty content object for the request
-        var content = new StringContent("", Encoding.UTF8, "application/json");
-
-        // Make the POST request
-        var response = await _httpClientService.PostAsync<AccountInfoResponse>(url, content, headers);
-        if (response == null)
-        {
-            throw new Exception("Failed to retrieve account information.");
-        }
-
-        return response;
-    }
-
-    public async Task<OrderShipmentResponse> Label_OrderShipment(OrderShipmentRequest request)
-    {
-        var url = $"{_baseUrl}/label/order/shipments";
-
-        var headers = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {_accessToken}" },
-            { "Content-Type", "application/json" }
-        };
-
-        // Serialize the request object to JSON
-        var content = new StringContent(request.ToJson(), Encoding.UTF8, "application/json");
-
-        // Make the POST request
-        var response = await _httpClientService.PostAsync<OrderShipmentResponse>(url, content, headers);
-        if (response == null)
-        {
-            throw new Exception("Failed to create order shipment label.");
-        }
-
-        return response;
-    }
-
-    public async Task<GetByTrackingNoResponse> OrderShipment_GetByTrackingNo(string trackingNo)
-    {
-        var url = $"{_baseUrl}/order-shipment/get-by-tracking-no/{trackingNo}";
-
-        var headers = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {_accessToken}" },
-            { "Content-Type", "application/json" },
-        };
-
-        var response = await _httpClientService.GetAsync<GetByTrackingNoResponse>(url, headers);
-        if (response == null)
-        {
-            throw new Exception($"Failed to retrieve order shipment for tracking number: {trackingNo}");
-        }
-
-        return response;
-    }
-
-    public async Task<GetByRefResponse> OrderShipment_GetByRef(string refNo)
-    {
-        var url = $"{_baseUrl}/order-shipment/get-by-ref/{refNo}";
-
-        var headers = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {_accessToken}" },
-            { "Content-Type", "application/json" },
-        };
-
-        var response = await _httpClientService.GetAsync<GetByRefResponse>(url, headers);
-        if (response == null)
-        {
-            throw new Exception($"Failed to retrieve order shipment for reference number: {refNo}");
-        }
-
-        return response;
+        Auth = new AuthPost(_accessToken, _baseUrl, _httpClientService);
+        Label = new LabelPost(_accessToken, _baseUrl, _httpClientService);
+        OrderShipment = new OrderShipmentPost(_accessToken, _baseUrl, _httpClientService);
+        ShipmentProvider = new ShipmentProviderPost(_accessToken, _baseUrl, _httpClientService);
+        Thailand = new ThailandPost(_accessToken, _baseUrl, _httpClientService);
     }
 
     public void Dispose()
     {
+        Auth.Dispose();
+        Label.Dispose();
+        OrderShipment.Dispose();
+        ShipmentProvider.Dispose();
+        Thailand.Dispose();
+        _httpClientService.Dispose();
     }
 }
