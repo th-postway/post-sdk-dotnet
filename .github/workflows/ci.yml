@@ -29,7 +29,7 @@ jobs:
       - run: dotnet test tests/UnitTest --no-build -c Release
       - run: dotnet test tests/IntegrationTest --no-build -c Release
       - run: dotnet pack libs/Postway --no-build -c Release -o artifacts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: nupkg
           path: artifacts/
