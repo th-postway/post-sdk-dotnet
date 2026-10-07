@@ -63,8 +63,9 @@ public sealed class OrderShipmentsResource
     /// Create one or more parcels, book them with the courier and issue the receipt. <c>POST order-shipment/create</c>.
     /// </summary>
     /// <remarks>
-    /// Not idempotent and never retried by the SDK. The batch stops at the first failure: parcels created before it
-    /// remain, so on <see cref="PostwayBusinessException"/> look them up by <c>my_tracking_no</c> before resubmitting.
+    /// Not idempotent and never retried by the SDK (bar the one replay after a 403 with an access-token provider,
+    /// which nothing ran for). The batch stops at the first failure: parcels created before it remain, so on
+    /// <see cref="PostwayBusinessException"/> look them up by <c>my_tracking_no</c> before resubmitting.
     /// </remarks>
     /// <returns>The created parcels, including their courier <c>tracking_no</c>.</returns>
     /// <exception cref="PostwayBusinessException">Verification, creation or receipt issue failed.</exception>

@@ -14,6 +14,6 @@ public sealed class AuthResource
         RequestOptions? options = null,
         CancellationToken cancellationToken = default) =>
         await _http.RequestAsync<MerchantAuthAccountInfoResponse>(
-            new HttpCall(HttpMethod.Post, ["auth", "account", "info"]) { Auth = true, Options = options },
+            new HttpCall(HttpMethod.Post, ["auth", "account", "info"]) { Auth = true, ObservesSession = true, Options = options },
             cancellationToken).ConfigureAwait(false) ?? new MerchantAuthAccountInfoResponse();
 }

@@ -7,10 +7,11 @@ namespace Postway.UnitTest.Support;
 /// <summary>One request as the stub saw it.</summary>
 public sealed record RecordedCall(string Method, string Url, IReadOnlyDictionary<string, string> Headers, JsonNode? Body, string? RawBody);
 
-/// <summary>Answers each request with the next queued responder and records what was sent.</summary>
+/// <summary>Answers each request with the next queued responder and records what was sent. Safe for concurrent requests.</summary>
 public sealed class StubHandler : HttpMessageHandler
 {
     private readonly Queue<Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>> _queue = new();
+    private readonly object _gate = new();
 
     public List<RecordedCall> Calls { get; } = [];
 
@@ -18,12 +19,16 @@ public sealed class StubHandler : HttpMessageHandler
 
     public CancellationToken LastToken { get; private set; }
 
-    public void Enqueue(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder) => _queue.Enqueue(responder);
+    public void Enqueue(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder)
+    {
+        lock (_gate)
+        {
+            _queue.Enqueue(responder);
+        }
+    }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        RequestCount++;
-        LastToken = cancellationToken;
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (name, values) in request.Headers.NonValidated)
         {
@@ -41,16 +46,23 @@ public sealed class StubHandler : HttpMessageHandler
             raw = await request.Content.ReadAsStringAsync(cancellationToken);
         }
 
-        Calls.Add(new RecordedCall(
+        var call = new RecordedCall(
             request.Method.Method,
             request.RequestUri!.AbsoluteUri,
             headers,
             raw is null ? null : JsonNode.Parse(raw),
-            raw));
+            raw);
 
-        if (!_queue.TryDequeue(out var responder))
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>? responder;
+        lock (_gate)
         {
-            throw new InvalidOperationException($"unexpected request {request.Method} {request.RequestUri}");
+            RequestCount++;
+            LastToken = cancellationToken;
+            Calls.Add(call);
+            if (!_queue.TryDequeue(out responder))
+            {
+                throw new InvalidOperationException($"unexpected request {request.Method} {request.RequestUri}");
+            }
         }
 
         var response = await responder(request, cancellationToken);

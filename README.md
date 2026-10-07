@@ -5,6 +5,7 @@
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick start](#quick-start)
+- [Demo](#demo)
 - [Authentication](#authentication)
 - [Environments](#environments)
 - [Method catalogue](#method-catalogue)
@@ -70,6 +71,16 @@ await File.WriteAllBytesAsync(Path.GetFileName(label.FileName), label.DecodeCont
 
 `PostwayMerchantClient` is thread-safe. Create one per access token and reuse it; dispose it when you are done (it owns its `HttpClient` unless you inject one).
 
+## Demo
+
+[`demo/Program.cs`](demo/README.md) is the Quick start as a console app you can run from a clone of this repository. It pings, reads account info, couriers, Thai postal areas and the store's parcels. It targets **sandbox** and is **read-only** unless you set `POSTWAY_DEMO_CREATE=1`, which also creates a sandbox parcel and saves its label. The token comes from the environment only.
+
+```bash
+POSTWAY_ACCESS_TOKEN=... dotnet run --project demo
+```
+
+See [demo/README.md](demo/README.md) for every variable and for using the local SDK in another project. The Node and Python SDKs ship the same demo. The demo project is not packable and is not part of the NuGet package.
+
 ## Authentication
 
 The Merchant API uses a **merchant session access token**. Postway issues it to your store out of band; there is no token endpoint in the API. The SDK sends it as:
@@ -80,8 +91,31 @@ Authorization: Bearer <AccessToken>
 
 - The server looks up the session by token type plus token, so set `TokenType` only if Postway gave you a different type. The default is `"Bearer"`.
 - Every call acts as the **owner of the store** the token belongs to, and every query is scoped to that store.
-- A missing, unknown or **expired** token gets HTTP **403**. `Auth.AccountInfoAsync()` returns `Session.Expired`, so you can rotate the token before it expires.
-- `Receipts.*` and `Health.PingAsync()` are public and never send the token. Every other method throws `PostwayConfigException` before any network call if the client has no `AccessToken`.
+- A missing, unknown or **expired** token gets HTTP **403**. `Auth.AccountInfoAsync()` returns `Session.Expired`; set `AccessTokenProvider` (below) and the SDK rotates the token for you.
+- `Receipts.*` and `Health.PingAsync()` are public and never send the token. Every other method throws `PostwayConfigException` before any network call if the client has neither `AccessToken` nor `AccessTokenProvider`.
+
+### Refreshing tokens automatically
+
+The API cannot issue tokens, so you supply them: `AccessTokenProvider` returns an `AccessToken(value, expiresAt?)`, and the SDK decides when to call it.
+
+```csharp
+using var postway = new PostwayMerchantClient(new PostwayMerchantClientOptions
+{
+    AccessTokenProvider = async (reason, cancellationToken) =>
+    {
+        // reason: AccessTokenRefreshReason.Initial | Expiring | Forbidden
+        var (token, expiresAt) = await secretStore.GetPostwayTokenAsync(cancellationToken);
+        return new AccessToken(token, expiresAt); // ExpiresAt is optional
+    },
+});
+```
+
+- **When it is called**: once for the first token (`Initial`), when **75% of the token's lifetime has elapsed** (less than 25% left, `Expiring`), and after a **403** (`Forbidden`). If both `AccessToken` and `AccessTokenProvider` are set, the static token is used first.
+- **Lifetime** comes from the first source available: the `ExpiresAt` you return, else the JWT `exp` / `iat` claims (decoded locally; the signature is not checked), else one `POST auth/account/info` probe per token that reads `session.expired`. Your own `Auth.AccountInfoAsync()` calls update it as well. A probe answered with 403 refreshes straight away; any other probe failure is ignored and the call goes ahead.
+- **403 replay**: when an authenticated call gets a 403, the SDK refreshes once and sends the same request once more. A second 403 throws `PostwayApiException` as usual, so it never loops. The API rejects the token before the request runs, so the replay is safe for `CreateAsync` and `CancelAsync` too.
+- Concurrent calls share one provider call and one probe. Exceptions thrown by the provider propagate unchanged, and nothing is sent. A returned token that is not a safe header value throws `PostwayConfigException` without echoing it. `AccessToken.ToString()` never prints the token.
+- `TimeProvider` (default `TimeProvider.System`) is the clock used for the 75% check; inject a fake one in tests.
+- Without `AccessTokenProvider` nothing changes: no probe, no refresh, no replay.
 
 ## Environments
 
@@ -101,6 +135,8 @@ new PostwayMerchantClient(new PostwayMerchantClientOptions { BaseUrl = MerchantB
 | Option        | Default                                    | Notes                                                                                   |
 | ------------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
 | `AccessToken` | —                                          | Merchant session token                                                                  |
+| `AccessTokenProvider` | —                                  | `Func<AccessTokenRefreshReason, CancellationToken, ValueTask<AccessToken>>`; turns on automatic refresh (see above) |
+| `TimeProvider` | `TimeProvider.System`                     | Clock for token refresh timing                                                          |
 | `TokenType`   | `"Bearer"`                                 | Auth scheme word of `Authorization`                                                     |
 | `Environment` | `MerchantEnvironment.Production`           | See table above                                                                         |
 | `BaseUrl`     | from `Environment`                         | `https://` only (`http://` for localhost); no credentials, query or fragment            |
@@ -153,7 +189,7 @@ Paths are relative to the base URL. All methods are `async` and return `Task`.
 
 Behaviour worth knowing:
 
-- **`OrderShipments.CreateAsync`** accepts one request or a sequence; the server always receives an array. Each parcel is priced, verified, created, booked with the courier, and covered by one receipt. It is **not idempotent** and the SDK never retries it (or anything else). A batch stops at the first failing parcel, and parcels created before that failure remain. On `PostwayBusinessException`, look them up by `my_tracking_no` (`OrderShipments.FilterAsync`) before you resubmit.
+- **`OrderShipments.CreateAsync`** accepts one request or a sequence; the server always receives an array. Each parcel is priced, verified, created, booked with the courier, and covered by one receipt. It is **not idempotent** and the SDK never retries it (or anything else), except for the single replay after a 403 when `AccessTokenProvider` is set (the server rejected the token, so nothing was created). A batch stops at the first failing parcel, and parcels created before that failure remain. On `PostwayBusinessException`, look them up by `my_tracking_no` (`OrderShipments.FilterAsync`) before you resubmit.
 - **`OrderShipments.CancelAsync`** matches the courier `tracking_no` only, not `my_tracking_no` or refs.
 - **`Labels.OrderShipmentsAsync`**: each `TrackingNos` entry may be a `tracking_no`, `my_tracking_no` or `ref1..3`. If none match, the server returns 400.
 - **`Thailand.FilterAsync`**: the field filters (`SubDistrict`, `District`, `Province`, `ZipCode`) are exact matches. `ShipmentProviderNames` restricts results to areas served by those couriers; leave it `null` for all (the SDK always sends the array, as `[]` when unset). The response spells the zip field `zipcode` (`MerchantThailand.Zipcode`).
@@ -184,7 +220,7 @@ The server reports errors as `{ code, isSuccess: false, message, data: null }` w
 | HTTP | Meaning                                                                                         |
 | ---- | ----------------------------------------------------------------------------------------------- |
 | 400  | Validation failure (`Messages` may hold several entries) or business rule, e.g. order not found |
-| 403  | Missing, unknown or expired token                                                               |
+| 403  | Missing, unknown or expired token (with `AccessTokenProvider`: still 403 after one refresh)     |
 | 404  | Public receipt token invalid                                                                    |
 | 500  | Server error; `Messages` is a generic text                                                      |
 
@@ -235,10 +271,11 @@ public sealed class FileHttpResponse
 - **Headers**: `AccessToken`, `TokenType` and `UserAgent` are checked at construction (printable ASCII, no line breaks — including a trailing one) so a pasted token with a stray line break cannot inject headers or leak into an error message.
 - **Paths**: caller-supplied path parameters are percent-encoded (`Uri.EscapeDataString`) and may not be `null`, empty, `.` or `..`, so a bad input cannot reach a different endpoint.
 - **Redirects** are refused: the SDK-owned handler has `AllowAutoRedirect = false`, any 3xx response throws `PostwayRequestException`, and so does a response an injected handler reached by following a redirect. The API never redirects, and following one could re-send `Authorization` elsewhere.
-- **Retries**: none, ever. `CreateAsync` is not idempotent.
+- **Retries**: none, except one replay of an authenticated call after a 403 when `AccessTokenProvider` is set. Server errors, timeouts and network failures are never retried; `CreateAsync` is not idempotent.
+- **Provider tokens** from `AccessTokenProvider` pass the same header check before use. JWT claims are read only to time a refresh; neither tokens nor claims appear in exceptions.
 - **Errors** report route templates instead of parameter values, and response bodies stay out of messages and serialization (see [Errors](#errors)).
 - The SDK has **no runtime dependencies**, never logs, and never reads environment variables.
-- The access token is held in a private field and is only sent on authenticated routes. Store it in a secret manager or user secrets, never in source control.
+- The access token is held in a private field and is only sent on authenticated routes (the provider is never called for public ones). Store it in a secret manager or user secrets, never in source control.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
@@ -255,6 +292,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 dotnet --version     # 8.0.x (global.json rolls forward to the latest 8.0 feature band)
 dotnet format --verify-no-changes && dotnet build -warnaserror && dotnet test tests/UnitTest   # the check
 dotnet pack libs/Postway -c Release -o artifacts
+dotnet run --project demo   # runnable Quick start (see Demo)
 ```
 
 ```
@@ -263,6 +301,7 @@ libs/Postway/Resources/   one class per API area (Auth, OrderShipments, Labels, 
 libs/Postway/Models/      request/response models, one file per area, plus Enums.cs
 tests/UnitTest/           Core/, Resources/ (one file per resource), Support/ (stub HttpMessageHandler), PackageSurfaceTests
 tests/IntegrationTest/    read-only live checks, skipped without credentials
+demo/                     runnable Quick start; in Postway.sln, so the check formats and builds it
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release procedure.
@@ -286,6 +325,8 @@ The Node SDK (`@th-postway/post-sdk`) is the reference implementation; this port
 | Node (`@th-postway/post-sdk`)                       | .NET (`ThPostway.PostSdk`)                                                  |
 | --------------------------------------------------- | --------------------------------------------------------------------------- |
 | `new PostwayMerchantClient({ accessToken, ... })`   | `new PostwayMerchantClient(new PostwayMerchantClientOptions { AccessToken = ..., ... })` |
+| `getAccessToken: reason => token \| { accessToken, expiresAt }` | `AccessTokenProvider = (reason, ct) => ValueTask<AccessToken>`; reasons are `AccessTokenRefreshReason` |
+| `vi.setSystemTime` in tests                         | `TimeProvider` option                                                        |
 | `environment: 'production' \| 'sandbox'`            | `Environment = MerchantEnvironment.Production \| Sandbox`                    |
 | `MERCHANT_BASE_URLS`                                | `MerchantBaseUrls.Production`, `.Sandbox`, `.For(env)`                       |
 | `timeoutMs: 60000`                                  | `Timeout = TimeSpan.FromSeconds(60)`                                         |

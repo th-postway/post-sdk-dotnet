@@ -31,7 +31,9 @@ public sealed class PostwayMerchantClient : IDisposable
             options.TokenType,
             options.Timeout,
             options.UserAgent ?? DefaultUserAgent(),
-            options.HttpClient);
+            options.HttpClient,
+            options.AccessTokenProvider,
+            options.TimeProvider ?? throw new PostwayConfigException("TimeProvider must not be null"));
 
         Auth = new AuthResource(_http);
         OrderShipments = new OrderShipmentsResource(_http);

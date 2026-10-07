@@ -12,8 +12,8 @@
 ## Layout
 
 ```
-libs/Postway/Core/        PostwayMerchantClient, PostwayMerchantClientOptions, MerchantEnvironment, RequestOptions, PostwaySdk, Errors/
-                          internal HttpPipeline, HttpCall, PathSegment, Validation
+libs/Postway/Core/        PostwayMerchantClient, PostwayMerchantClientOptions, AccessToken, MerchantEnvironment, RequestOptions, PostwaySdk, Errors/
+                          internal HttpPipeline, HttpCall, PathSegment, Validation, AccessTokenManager
 libs/Postway/Resources/   one class per API area (AuthResource, OrderShipmentsResource, ...)
 libs/Postway/Models/      one file per area plus Enums.cs and Common.cs
 tests/UnitTest/Support    Stub.cs: StubHandler, Setup(), Json(), Empty(), Text(), ApiError(), Envelope(), Only(), JsonEqual()
@@ -37,7 +37,7 @@ tests/IntegrationTest     live, read-only
 - `PostwayConfigException` messages never include the offending value.
 - Caller-supplied path segments are wrapped in `PathSegment.Param(name, value)` so they are validated and appear as `:name` in error URLs and messages.
 - All header values pass through `Core/Validation.cs` (regexes anchored with `\z`). `BaseUrl` must be https (http only for loopback), with no credentials, query or fragment.
-- `AllowAutoRedirect = false` and the 3xx refusal stay. No retries on any call.
+- `AllowAutoRedirect = false` and the 3xx refusal stay. No retries, except the single replay of an authenticated call after a 403 when `AccessTokenProvider` refreshed the token (`Core/AccessTokenManager.cs`).
 - No `Console.*`, no `Environment.GetEnvironmentVariable` in `libs/`.
 - No tokens, tracking numbers, refs or response bodies in exception messages. `PostwayApiException.Body` stays `[JsonIgnore]` and out of `Message`.
 - No internal infrastructure names (hosts, ports, service/framework names, private package names) anywhere in code, comments, tests or docs. Public hosts are only the two in `MerchantBaseUrls`.
