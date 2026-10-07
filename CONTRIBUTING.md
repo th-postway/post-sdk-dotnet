@@ -39,7 +39,7 @@ tests/IntegrationTest         read-only live checks, skipped without credentials
 - `PostwayConfigException` messages never repeat the offending value.
 - Every caller-supplied path segment goes through `PathSegment.Param(name, value)`, so it is validated and shown as `:name` in errors.
 - Header values go through the validators in `Core/Validation.cs` (anchor regexes with `\z`, not `$`).
-- Keep `AllowAutoRedirect = false` and the 3xx refusal. No retries.
+- Keep `AllowAutoRedirect = false` and the 3xx refusal. No retries beyond the single 403 replay after a token refresh.
 - No internal hostnames, ports, service names or private package names anywhere in code, comments, tests or docs. Public hosts are only the two in `MerchantBaseUrls`.
 
 ## Adding an endpoint

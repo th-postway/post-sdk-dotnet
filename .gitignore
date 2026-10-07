@@ -270,3 +270,6 @@ __pycache__/
 
 logs/
 *.log
+demo/output/
+.env
+.env.*

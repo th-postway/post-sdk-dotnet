@@ -5,9 +5,20 @@ public sealed class PostwayMerchantClientOptions
 {
     /// <summary>
     /// Merchant session access token, issued to you by Postway. Required for every call except
-    /// <c>Receipts.*</c> and <c>Health.PingAsync()</c>.
+    /// <c>Receipts.*</c> and <c>Health.PingAsync()</c>. Not needed when <see cref="AccessTokenProvider"/> is set.
     /// </summary>
     public string? AccessToken { get; set; }
+
+    /// <summary>
+    /// Supplies merchant access tokens and turns on automatic refresh. Called when there is no token yet, once at
+    /// least 75% of the current token's lifetime has elapsed (from the returned <see cref="Postway.AccessToken.ExpiresAt"/>,
+    /// else the JWT <c>exp</c>/<c>iat</c> claims, else one <c>auth/account/info</c> probe per token), and once after a
+    /// 403, after which the rejected call is replayed once. Exceptions it throws propagate unchanged.
+    /// </summary>
+    public Func<AccessTokenRefreshReason, CancellationToken, ValueTask<AccessToken>>? AccessTokenProvider { get; set; }
+
+    /// <summary>Clock used to time token refreshes. Default <see cref="TimeProvider.System"/>.</summary>
+    public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 
     /// <summary>Token type sent before the token in <c>Authorization</c>. Default <c>"Bearer"</c>.</summary>
     public string TokenType { get; set; } = "Bearer";

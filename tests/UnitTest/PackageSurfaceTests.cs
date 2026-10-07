@@ -9,6 +9,8 @@ public class PackageSurfaceTests
 {
     private static readonly string[] PublicTypes =
     [
+        "Postway.AccessToken",
+        "Postway.AccessTokenRefreshReason",
         "Postway.MerchantBaseUrls",
         "Postway.MerchantEnvironment",
         "Postway.Models.CalculatedRange",
