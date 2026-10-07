@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - Runnable Quick start in `demo/` (`dotnet run --project demo`): read-only and sandbox by default, with an opt-in sandbox create + label (`POSTWAY_DEMO_CREATE=1`). Part of `Postway.sln`, so the check formats and builds it. Not packable.
 
+### Changed
+
+- Release tags are bare SemVer (`MAJOR.MINOR.PATCH`, no `v` prefix) and are cut through git-flow: CI runs on `develop`, `release/**` and `hotfix/**`, and Publish only accepts a tag on `main` that equals the package version. Dependabot targets `develop`; the duplicate `dotnet-build.yml` workflow is removed.
+
+### Fixed
+
+- The legacy `Post` / `IPost` sources and tests that reappeared after 8.0.0 are removed again, so the package matches the 8.0.0 public surface and the CI check passes.
+
 ## [8.0.0] - 2026-10-07
 
 Rewrite with the same surface, behaviour and security rules as the Node SDK (`@th-postway/post-sdk` 22.0.0). Published as `ThPostway.PostSdk`.
@@ -35,5 +43,10 @@ Rewrite with the same surface, behaviour and security rules as the Node SDK (`@t
 - Exception `Url` and `Message` report route templates (`receipt/public/:token`) instead of parameter values; `PostwayApiException.Body` is excluded from messages and JSON serialization.
 - `PostwayConfigException` messages never echo the offending input.
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/v8.0.0...HEAD
 [8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/v8.0.0
+=======
+[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...HEAD
+[8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/8.0.0
+>>>>>>> release/8.0.0
