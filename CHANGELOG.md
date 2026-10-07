@@ -43,10 +43,5 @@ Rewrite with the same surface, behaviour and security rules as the Node SDK (`@t
 - Exception `Url` and `Message` report route templates (`receipt/public/:token`) instead of parameter values; `PostwayApiException.Body` is excluded from messages and JSON serialization.
 - `PostwayConfigException` messages never echo the offending input.
 
-<<<<<<< HEAD
-[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/v8.0.0...HEAD
-[8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/v8.0.0
-=======
 [Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...HEAD
 [8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/8.0.0
->>>>>>> release/8.0.0
