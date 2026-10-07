@@ -29,8 +29,6 @@ tests/IntegrationTest     live, read-only
 demo/                     runnable Quick start (in the solution, not packed)
 ```
 
-Legacy: `libs/Postway/Post.cs` (`Post`/`IPost`), `Data/`, `Core/ViewModels/`, `Core/Models/`, `Core/CONST/`, `Core/Extensions/` and their tests under `tests/UnitTest/Post/` and `tests/IntegrationTest/Postway/` are the 2025 predecessor client. They are not in the `PackageSurfaceTests` snapshot and do not pass `-warnaserror`. Don't extend or imitate them.
-
 ## How a call flows
 
 1. A resource method builds an `HttpCall`: method, `PathSegment[]` (string literals convert implicitly; caller input via `PathSegment.Param`), optional `Query`, `Body`, `Auth = true` for authenticated routes, and the caller's `RequestOptions`.

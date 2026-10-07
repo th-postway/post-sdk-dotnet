@@ -12,6 +12,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - Release tags are bare SemVer (`MAJOR.MINOR.PATCH`, no `v` prefix) and are cut through git-flow: CI runs on `develop`, `release/**` and `hotfix/**`, and Publish only accepts a tag on `main` that equals the package version. Dependabot targets `develop`; the duplicate `dotnet-build.yml` workflow is removed.
 
+### Fixed
+
+- The legacy `Post` / `IPost` sources and tests that reappeared after 8.0.0 are removed again, so the package matches the 8.0.0 public surface and the CI check passes.
+
 ## [8.0.0] - 2026-10-07
 
 Rewrite with the same surface, behaviour and security rules as the Node SDK (`@th-postway/post-sdk` 22.0.0). Published as `ThPostway.PostSdk`.
