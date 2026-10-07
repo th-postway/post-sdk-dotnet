@@ -1,0 +1,35 @@
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: nuget
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Tag must match the package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' libs/Postway/Postway.csproj)
+          if [ "v$version" != "$TAG" ]; then echo "tag $TAG does not match package version $version"; exit 1; fi
+      - run: dotnet restore
+      - run: dotnet format --verify-no-changes --no-restore
+      - run: dotnet build -warnaserror --no-restore -c Release
+      - run: dotnet test tests/UnitTest --no-build -c Release
+      - run: dotnet pack libs/Postway --no-build -c Release -o artifacts
+      - run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

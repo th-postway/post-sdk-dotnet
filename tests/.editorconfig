@@ -1,0 +1,5 @@
+[*.cs]
+# Tests exercise the SDK's own default CancellationToken on purpose.
+dotnet_diagnostic.xUnit1051.severity = none
+# Test names are sentences.
+dotnet_diagnostic.CA1707.severity = none

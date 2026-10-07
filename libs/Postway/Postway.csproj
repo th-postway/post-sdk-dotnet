@@ -1,11 +1,37 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <RootNamespace>Postway</RootNamespace>
-    <Version>1.0.0</Version>
+    <AssemblyName>Postway</AssemblyName>
+
+    <!-- Single source of the SDK version; PostwaySdk.Version must match (test-enforced). -->
+    <Version>8.0.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>false</IsAotCompatible>
+
+    <PackageId>ThPostway.PostSdk</PackageId>
+    <Title>Postway Merchant API SDK</Title>
+    <Description>.NET SDK for the Postway Merchant API (order shipments, labels, pricing, Thailand postal master).</Description>
+    <Authors>Postway Co., Ltd.</Authors>
+    <Company>Postway Co., Ltd.</Company>
+    <Copyright>Copyright (c) 2026 Postway Co., Ltd.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>postway;merchant;shipping;thailand;sdk</PackageTags>
+    <PackageProjectUrl>https://github.com/th-postway/post-sdk-dotnet#readme</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/th-postway/post-sdk-dotnet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>
