@@ -19,7 +19,7 @@ internal sealed class HttpPipeline : IDisposable
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
     };
 
-    private readonly string? _accessToken;
+    private readonly AccessTokenManager _tokens;
     private readonly string _tokenType;
     private readonly TimeSpan _timeout;
     private readonly string _userAgent;
@@ -33,7 +33,9 @@ internal sealed class HttpPipeline : IDisposable
         string tokenType,
         TimeSpan timeout,
         string userAgent,
-        HttpClient? httpClient)
+        HttpClient? httpClient,
+        Func<AccessTokenRefreshReason, CancellationToken, ValueTask<AccessToken>>? accessTokenProvider = null,
+        TimeProvider? timeProvider = null)
     {
         BaseUrl = Validation.NormalizeBaseUrl(baseUrl);
         if (accessToken is not null)
@@ -45,7 +47,7 @@ internal sealed class HttpPipeline : IDisposable
         Validation.AssertHeaderValue(userAgent, "UserAgent");
         Validation.AssertTimeout(timeout, "Timeout");
 
-        _accessToken = accessToken;
+        _tokens = new AccessTokenManager(accessToken, accessTokenProvider, timeProvider ?? TimeProvider.System);
         _tokenType = tokenType;
         _timeout = timeout;
         _userAgent = userAgent;
@@ -180,6 +182,8 @@ internal sealed class HttpPipeline : IDisposable
         {
             _http.Dispose();
         }
+
+        _tokens.Dispose();
     }
 
     private static HttpClient CreateDefaultHttpClient() =>
@@ -193,21 +197,60 @@ internal sealed class HttpPipeline : IDisposable
             Timeout = Timeout.InfiniteTimeSpan,
         };
 
-    /// <summary><see cref="SendAsync"/>, throwing <see cref="PostwayApiException"/> for a non-2xx status.</summary>
+    /// <summary>
+    /// <see cref="SendAsync"/> with the access-token flow, throwing <see cref="PostwayApiException"/> for a non-2xx
+    /// status. With a token provider, a 403 on an authenticated call refreshes the token once and replays the call
+    /// once: the API rejects the token before running the request, so the replay cannot duplicate its effect.
+    /// </summary>
     private async Task<SendResult> SendCheckedAsync(HttpCall call, CancellationToken cancellationToken)
     {
-        var result = await SendAsync(call, cancellationToken).ConfigureAwait(false);
+        string? token = null;
+        var mayReplay = false;
+        if (call.Auth)
+        {
+            if (!_tokens.Configured)
+            {
+                throw new PostwayConfigException(
+                    $"{call.Method.Method} {Route(call.Path)} requires a merchant access token; set AccessToken or AccessTokenProvider on the client options");
+            }
+
+            (token, var refreshedAfterForbidden) = await _tokens
+                .ResolveAsync(call.ObservesSession ? null : (sent, ct) => ProbeSessionAsync(call, sent, ct), cancellationToken)
+                .ConfigureAwait(false);
+            mayReplay = _tokens.CanRefresh && !refreshedAfterForbidden;
+        }
+
+        var result = await SendAsync(call, token, cancellationToken).ConfigureAwait(false);
+        if (result.Status == 403 && mayReplay && token is not null)
+        {
+            token = await _tokens.RefreshAfterForbiddenAsync(token, cancellationToken).ConfigureAwait(false);
+            result = await SendAsync(call, token, cancellationToken).ConfigureAwait(false);
+        }
+
         if (result.Status is < 200 or >= 300)
         {
             var (code, messages) = Describe(result);
             throw new PostwayApiException(call.Method.Method, result.Url, result.Status, code, messages, result.Body);
         }
 
+        if (call.ObservesSession && token is not null)
+        {
+            _tokens.ObserveSession(token, result.IsJson ? result.Body : null);
+        }
+
         return result;
     }
 
+    /// <summary><c>POST auth/account/info</c> with the caller's options: learns an unknown token lifetime.</summary>
+    private async Task<(int Status, string? Body)> ProbeSessionAsync(HttpCall call, string token, CancellationToken cancellationToken)
+    {
+        var probe = new HttpCall(HttpMethod.Post, ["auth", "account", "info"]) { Auth = true, Options = call.Options };
+        var result = await SendAsync(probe, token, cancellationToken).ConfigureAwait(false);
+        return (result.Status, result.IsJson ? result.Body : null);
+    }
+
     /// <summary>The returned <c>Url</c> is the redacted route URL, not the one sent.</summary>
-    private async Task<SendResult> SendAsync(HttpCall call, CancellationToken cancellationToken)
+    private async Task<SendResult> SendAsync(HttpCall call, string? token, CancellationToken cancellationToken)
     {
         var method = call.Method.Method;
         var url = new Uri(Url(call.Path, call.Query));
@@ -216,15 +259,9 @@ internal sealed class HttpPipeline : IDisposable
         using var request = new HttpRequestMessage(call.Method, url);
         request.Headers.TryAddWithoutValidation("Accept", AcceptHeader);
         request.Headers.TryAddWithoutValidation("User-Agent", _userAgent);
-        if (call.Auth)
+        if (call.Auth && token is not null)
         {
-            if (_accessToken is null)
-            {
-                throw new PostwayConfigException(
-                    $"{method} {Route(call.Path)} requires a merchant access token; set AccessToken on the client options");
-            }
-
-            request.Headers.TryAddWithoutValidation("Authorization", $"{_tokenType} {_accessToken}");
+            request.Headers.TryAddWithoutValidation("Authorization", $"{_tokenType} {token}");
         }
 
         if (call.Body is not null)

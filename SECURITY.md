@@ -17,7 +17,7 @@ You will receive an acknowledgement within three business days. Confirmed issues
 - `BaseUrl` must be `https://`; plain `http://` is accepted only for loopback hosts.
 - Header values (`AccessToken`, `TokenType`, `UserAgent`) are validated at construction so they cannot inject headers.
 - Caller-supplied path parameters are percent-encoded and may not be empty, `.` or `..`.
-- Redirects are never followed, and no request is ever retried.
+- Redirects are never followed, and no request is retried except one replay of an authenticated call after a 403 when an `AccessTokenProvider` supplied a fresh token.
 - Exception messages and `Url` properties never contain tokens, tracking numbers or other path parameters, and response bodies are kept out of messages, `ToString()` and JSON serialization.
 - The SDK has no runtime dependencies, does not log, and does not read environment variables.
 

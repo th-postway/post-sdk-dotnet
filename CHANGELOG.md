@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Runnable Quick start in `demo/` (`dotnet run --project demo`): read-only and sandbox by default, with an opt-in sandbox create + label (`POSTWAY_DEMO_CREATE=1`). Part of `Postway.sln`, so the check formats and builds it. Not packable.
+
 ## [8.0.0] - 2026-10-07
 
 Rewrite with the same surface, behaviour and security rules as the Node SDK (`@th-postway/post-sdk` 22.0.0). Published as `ThPostway.PostSdk`.
