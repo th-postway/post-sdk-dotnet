@@ -5,7 +5,7 @@
     <AssemblyName>Postway</AssemblyName>
 
     <!-- Single source of the SDK version; PostwaySdk.Version must match (test-enforced). -->
-    <Version>8.0.0</Version>
+    <Version>8.0.1</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

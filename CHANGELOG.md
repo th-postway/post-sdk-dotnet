@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [8.0.1] - 2026-10-17
+
 ### Added
 
 - Runnable Quick start in `demo/` (`dotnet run --project demo`): read-only and sandbox by default, with an opt-in sandbox create + label (`POSTWAY_DEMO_CREATE=1`). Part of `Postway.sln`, so the check formats and builds it. Not packable.
@@ -50,5 +52,6 @@ Rewrite with the same surface, behaviour and security rules as the Node SDK (`@t
 - Exception `Url` and `Message` report route templates (`receipt/public/:token`) instead of parameter values; `PostwayApiException.Body` is excluded from messages and JSON serialization.
 - `PostwayConfigException` messages never echo the offending input.
 
-[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...HEAD
+[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.1...HEAD
+[8.0.1]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...8.0.1
 [8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/8.0.0
