@@ -47,6 +47,28 @@ public class HttpPipelineTests
         Assert.Equal(0, handler.RequestCount);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task RejectsALoneSurrogateInAPathParameterBeforeAnyRequest(int index)
+    {
+        // Built here: xUnit replaces lone surrogates in InlineData strings with U+FFFD.
+        var value = new[] { "\uD800", "a\uDC00", "\uDC00\uD800" }[index];
+        var (client, handler) = Setup();
+        var error = await Assert.ThrowsAsync<PostwayConfigException>(() => client.OrderShipments.GetByRefAsync(value));
+        Assert.Equal("ref must be well-formed Unicode text", error.Message);
+        Assert.Equal(0, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task EncodesASurrogatePairInAPathParameter()
+    {
+        var (client, handler) = Setup(Json("null"));
+        await client.OrderShipments.GetByRefAsync("A😀");
+        Assert.Equal($"{BaseUrl}/order-shipment/get-by-ref/A%F0%9F%98%80", Only(handler).Url);
+    }
+
     [Fact]
     public void PathParameterErrorsNameTheParameterNotTheValue()
     {
@@ -166,6 +188,28 @@ public class HttpPipelineTests
         Assert.Equal(502, error.Status);
         Assert.Equal("<html>Bad Gateway</html>", error.Body);
         Assert.Null(error.Code);
+        Assert.Empty(error.Messages);
+        Assert.Equal("HTTP 502", error.Message);
+    }
+
+    [Fact]
+    public async Task KeepsATextErrorBodyThatEchoesThePathOutOfTheMessage()
+    {
+        const string echoed = "Cannot GET /merchant/receipt/public/secret-token";
+        var (client, _) = Setup([Text(echoed, 404, "text/plain")], o => o.AccessToken = null);
+        var error = await Assert.ThrowsAsync<PostwayApiException>(() => client.Receipts.GetPublicAsync("secret-token"));
+        Assert.Equal("HTTP 404", error.Message);
+        Assert.Equal(echoed, error.Body);
+        Assert.DoesNotContain("secret-token", error.ToString());
+    }
+
+    [Fact]
+    public async Task KeepsAJsonStringErrorBodyOutOfTheMessage()
+    {
+        var (client, _) = Setup(Json("\"Cannot GET /merchant/shipment-provider/all\"", 404));
+        var error = await Assert.ThrowsAsync<PostwayApiException>(() => client.ShipmentProviders.AllAsync());
+        Assert.Equal("HTTP 404", error.Message);
+        Assert.Empty(error.Messages);
     }
 
     [Fact]
@@ -243,6 +287,38 @@ public class HttpPipelineTests
         Assert.Equal("GET", error.Method);
         Assert.Equal($"{BaseUrl}/receipt/public/:token", error.Url);
         Assert.Equal($"GET {BaseUrl}/receipt/public/:token failed: connection refused", error.Message);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RedactsTheUrlQuotedByAnInjectedHandlerError(bool pathOnly)
+    {
+        HttpRequestException? cause = null;
+        var (client, handler) = Setup([], o => o.AccessToken = null);
+        handler.Enqueue((request, _) =>
+        {
+            cause = new HttpRequestException(pathOnly
+                ? $"Max retries exceeded with url: {request.RequestUri!.AbsolutePath}"
+                : $"request to {request.RequestUri!.AbsoluteUri} failed, reason: ECONNREFUSED");
+            return Task.FromException<HttpResponseMessage>(cause);
+        });
+        var error = await Assert.ThrowsAsync<PostwayRequestException>(() => client.Receipts.GetPublicAsync("secret-token"));
+        Assert.DoesNotContain("secret-token", error.Message);
+        Assert.Contains("/merchant/receipt/public/:token", error.Message);
+        Assert.Same(cause, error.InnerException);
+    }
+
+    [Fact]
+    public async Task RedactsTheAccessTokenQuotedByAnInjectedHandlerError()
+    {
+        var (client, handler) = Setup();
+        handler.Enqueue((request, _) =>
+            Task.FromException<HttpResponseMessage>(new HttpRequestException($"bad header {request.Headers.Authorization}")));
+        var error = await Assert.ThrowsAsync<PostwayRequestException>(() => client.OrderShipments.GetByTrackingNoAsync("TH0001"));
+        Assert.Equal(
+            $"GET {BaseUrl}/order-shipment/get-by-tracking-no/:tracking_no failed: bad header Bearer [redacted]",
+            error.Message);
     }
 
     [Fact]

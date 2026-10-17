@@ -253,7 +253,8 @@ internal sealed class HttpPipeline : IDisposable
     private async Task<SendResult> SendAsync(HttpCall call, string? token, CancellationToken cancellationToken)
     {
         var method = call.Method.Method;
-        var url = new Uri(Url(call.Path, call.Query));
+        var sentUrl = Url(call.Path, call.Query);
+        var url = new Uri(sentUrl);
         var reportedUrl = RouteUrl(call.Path);
 
         using var request = new HttpRequestMessage(call.Method, url);
@@ -318,8 +319,43 @@ internal sealed class HttpPipeline : IDisposable
         }
         catch (Exception error)
         {
-            throw new PostwayRequestException(method, reportedUrl, $"{method} {reportedUrl} failed: {error.Message}", error);
+            var reason = RedactReason(error.Message, sentUrl, url, reportedUrl, token);
+            throw new PostwayRequestException(method, reportedUrl, $"{method} {reportedUrl} failed: {reason}", error);
         }
+    }
+
+    /// <summary>
+    /// A transport's error text with the sent URL (whole, or just its path) replaced by the route template and the
+    /// token by <c>[redacted]</c>: injected handlers often quote the URL they failed to reach.
+    /// </summary>
+    private string RedactReason(string reason, string sentUrl, Uri url, string reportedUrl, string? token)
+    {
+        // Both URLs start with BaseUrl, so its scheme and authority prefix both of them.
+        var pathStart = BaseUrl.IndexOf('/', BaseUrl.IndexOf("://", StringComparison.Ordinal) + 3);
+        var origin = pathStart < 0 ? BaseUrl : BaseUrl[..pathStart];
+        var reportedPath = reportedUrl[origin.Length..];
+        var sentPath = sentUrl[origin.Length..].Split('?')[0];
+        (string From, string To)[] replacements =
+        [
+            (sentUrl, reportedUrl),
+            (url.AbsoluteUri, reportedUrl),
+            (origin + sentPath, reportedUrl),
+            (url.GetLeftPart(UriPartial.Path), reportedUrl),
+            (sentUrl[origin.Length..], reportedPath),
+            (url.PathAndQuery, reportedPath),
+            (sentPath, reportedPath),
+            (url.AbsolutePath, reportedPath),
+            (token ?? "", "[redacted]"),
+        ];
+        foreach (var (from, to) in replacements)
+        {
+            if (from.Length > 0 && from != to)
+            {
+                reason = reason.Replace(from, to, StringComparison.Ordinal);
+            }
+        }
+
+        return reason;
     }
 
     private static PostwayApiException Unexpected(HttpCall call, SendResult result, string message, Exception? inner = null)
@@ -341,7 +377,10 @@ internal sealed class HttpPipeline : IDisposable
         }
     }
 
-    /// <summary>Body <c>code</c> (when a number) and <c>message</c> (string or list) of a response.</summary>
+    /// <summary>
+    /// Body <c>code</c> (when a number) and <c>message</c> (string or list) of a JSON object response. Only an object's
+    /// <c>message</c> counts: a text body (an HTML error page, an echoed path) never becomes the message.
+    /// </summary>
     private static (int? Code, IReadOnlyList<string> Messages) Describe(SendResult result)
     {
         if (result.Body is null)
@@ -351,7 +390,7 @@ internal sealed class HttpPipeline : IDisposable
 
         if (!result.IsJson || !TryParse(result.Body, out var document))
         {
-            return (null, [result.Body]);
+            return (null, []);
         }
 
         using (document)
@@ -359,9 +398,6 @@ internal sealed class HttpPipeline : IDisposable
             var root = document.RootElement;
             switch (root.ValueKind)
             {
-                case JsonValueKind.String:
-                    var text = root.GetString();
-                    return (null, string.IsNullOrEmpty(text) ? [] : [text]);
                 case JsonValueKind.Object:
                     int? code = root.TryGetProperty("code", out var codeElement)
                         && codeElement.ValueKind == JsonValueKind.Number

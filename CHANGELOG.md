@@ -19,6 +19,9 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Security
 
 - Removed a local `.env` that was committed by mistake. The demo docs no longer suggest a `.env` file, and SECURITY.md describes how to handle credentials. Repository and docs only; the package is unchanged.
+- `PostwayRequestException` messages redact the underlying exception's text: the sent URL (or its path and query) becomes the route template and the access token becomes `[redacted]`. `InnerException` is unchanged.
+- A plain-text error body (an HTML error page, or a framework message that echoes the request path) no longer becomes the error message: only the JSON `message` field fills `Messages`, and the message otherwise falls back to `HTTP <status>`. The body is still available as `error.Body`.
+- A path parameter with an unpaired surrogate now throws `PostwayConfigException` before any request, instead of being sent with U+FFFD in its place.
 
 ## [8.0.0] - 2026-10-07
 
