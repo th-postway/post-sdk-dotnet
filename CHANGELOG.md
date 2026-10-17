@@ -16,6 +16,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - The legacy `Post` / `IPost` sources and tests that reappeared after 8.0.0 are removed again, so the package matches the 8.0.0 public surface and the CI check passes.
 
+### Security
+
+- Removed a local `.env` that was committed by mistake. The demo docs no longer suggest a `.env` file, and SECURITY.md describes how to handle credentials. Repository and docs only; the package is unchanged.
+
 ## [8.0.0] - 2026-10-07
 
 Rewrite with the same surface, behaviour and security rules as the Node SDK (`@th-postway/post-sdk` 22.0.0). Published as `ThPostway.PostSdk`.

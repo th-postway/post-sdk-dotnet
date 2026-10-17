@@ -73,7 +73,7 @@ await File.WriteAllBytesAsync(Path.GetFileName(label.FileName), label.DecodeCont
 
 ## Demo
 
-[`demo/Program.cs`](demo/README.md) is the Quick start as a console app you can run from a clone of this repository. It pings, reads account info, couriers, Thai postal areas and the store's parcels. It targets **sandbox** and is **read-only** unless you set `POSTWAY_DEMO_CREATE=1`, which also creates a sandbox parcel and saves its label. The token comes from the environment only.
+[`demo/Program.cs`](demo/README.md) is the Quick start as a console app you can run from a clone of this repository. It pings, reads account info, couriers, Thai postal areas and the store's parcels. It targets **sandbox** and is **read-only** unless you set `POSTWAY_DEMO_CREATE=1`, which also creates a sandbox parcel and saves its label. The token comes from process environment variables only; the demo never reads a `.env` file.
 
 ```bash
 POSTWAY_ACCESS_TOKEN=... dotnet run --project demo
@@ -275,7 +275,7 @@ public sealed class FileHttpResponse
 - **Provider tokens** from `AccessTokenProvider` pass the same header check before use. JWT claims are read only to time a refresh; neither tokens nor claims appear in exceptions.
 - **Errors** report route templates instead of parameter values, and response bodies stay out of messages and serialization (see [Errors](#errors)).
 - The SDK has **no runtime dependencies**, never logs, and never reads environment variables.
-- The access token is held in a private field and is only sent on authenticated routes (the provider is never called for public ones). Store it in a secret manager or user secrets, never in source control.
+- The access token is held in a private field and is only sent on authenticated routes (the provider is never called for public ones). Store it in user secrets (`dotnet user-secrets`) during development and in a secret manager in production; never commit it or keep it in a file inside the repository. A token that was ever committed must be rotated, because deleting the file does not revoke it.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

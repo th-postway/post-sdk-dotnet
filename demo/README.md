@@ -30,9 +30,9 @@ dotnet run --project demo
 | `POSTWAY_ACCESS_TOKEN`                        | for steps 2–6 | Merchant session token. `POSTWAY_MERCHANT_ACCESS_TOKEN` (used by integration tests) also works                                        |
 | `POSTWAY_MERCHANT_BASE_URL`                   | no            | Base URL override. Default: `MerchantBaseUrls.Sandbox`                                                                                |
 | `POSTWAY_DEMO_CREATE`                         | no            | `1` runs step 6                                                                                                                       |
-| `POSTWAY_CLIENT_ID` / `POSTWAY_CLIENT_SECRET` | no            | The store's client credentials. Not read by the demo or the SDK: the API has no token endpoint, so authenticate with the access token |
+| `POSTWAY_CLIENT_ID` / `POSTWAY_CLIENT_SECRET` | no            | The store's client credentials. Not read by the demo or the SDK: the API has no token endpoint, so authenticate with the access token. Do not set them for the demo or keep them in the repository |
 
-The demo reads environment variables only. To keep them in a local `.env` (gitignored, never committed), load it first: `set -a; . ./.env; set +a; dotnet run --project demo`.
+The demo reads process environment variables only; it never loads `.env` or any other file. Set them in your shell (`export`, as above) or inject them from a secret manager. Do not keep tokens in files inside the repository: `.env` and `.env.*` are gitignored, but an ignore rule does not protect a file that is already tracked or added with `git add -f`.
 
 Without a token the demo pings, prints which variable to set, and exits with code 1. A 403 means the token is missing, unknown or expired.
 
