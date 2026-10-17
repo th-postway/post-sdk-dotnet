@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [8.0.1] - 2026-10-17
+
 ### Added
 
 - Runnable Quick start in `demo/` (`dotnet run --project demo`): read-only and sandbox by default, with an opt-in sandbox create + label (`POSTWAY_DEMO_CREATE=1`). Part of `Postway.sln`, so the check formats and builds it. Not packable.
@@ -15,6 +17,13 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Fixed
 
 - The legacy `Post` / `IPost` sources and tests that reappeared after 8.0.0 are removed again, so the package matches the 8.0.0 public surface and the CI check passes.
+
+### Security
+
+- Removed a local `.env` that was committed by mistake. The demo docs no longer suggest a `.env` file, and SECURITY.md describes how to handle credentials. Repository and docs only; the package is unchanged.
+- `PostwayRequestException` messages redact the underlying exception's text: the sent URL (or its path and query) becomes the route template and the access token becomes `[redacted]`. `InnerException` is unchanged.
+- A plain-text error body (an HTML error page, or a framework message that echoes the request path) no longer becomes the error message: only the JSON `message` field fills `Messages`, and the message otherwise falls back to `HTTP <status>`. The body is still available as `error.Body`.
+- A path parameter with an unpaired surrogate now throws `PostwayConfigException` before any request, instead of being sent with U+FFFD in its place.
 
 ## [8.0.0] - 2026-10-07
 
@@ -43,5 +52,6 @@ Rewrite with the same surface, behaviour and security rules as the Node SDK (`@t
 - Exception `Url` and `Message` report route templates (`receipt/public/:token`) instead of parameter values; `PostwayApiException.Body` is excluded from messages and JSON serialization.
 - `PostwayConfigException` messages never echo the offending input.
 
-[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...HEAD
+[Unreleased]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.1...HEAD
+[8.0.1]: https://github.com/th-postway/post-sdk-dotnet/compare/8.0.0...8.0.1
 [8.0.0]: https://github.com/th-postway/post-sdk-dotnet/releases/tag/8.0.0

@@ -59,6 +59,7 @@ demo/                     runnable Quick start (in the solution, not packed)
 - All header values pass through `Core/Validation.cs` (regexes anchored with `\z`). `BaseUrl` must be https (http only for loopback), with no credentials, query or fragment.
 - `AllowAutoRedirect = false` and the 3xx refusal stay. No retries, except the single replay of an authenticated call after a 403 when `AccessTokenProvider` refreshed the token (`Core/AccessTokenManager.cs`).
 - No `Console.*`, no `Environment.GetEnvironmentVariable` in `libs/`.
+- Never commit credential files (`.env`, `.env.*`); docs teach environment variables, user secrets or a secret manager.
 - No tokens, tracking numbers, refs or response bodies in exception messages. `PostwayApiException.Body` stays `[JsonIgnore]` and out of `Message`.
 - No internal infrastructure names (hosts, ports, service/framework names, private package names) anywhere in code, comments, tests or docs. Public hosts are only the two in `MerchantBaseUrls`.
 

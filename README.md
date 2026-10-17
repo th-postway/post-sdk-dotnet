@@ -73,7 +73,7 @@ await File.WriteAllBytesAsync(Path.GetFileName(label.FileName), label.DecodeCont
 
 ## Demo
 
-[`demo/Program.cs`](demo/README.md) is the Quick start as a console app you can run from a clone of this repository. It pings, reads account info, couriers, Thai postal areas and the store's parcels. It targets **sandbox** and is **read-only** unless you set `POSTWAY_DEMO_CREATE=1`, which also creates a sandbox parcel and saves its label. The token comes from the environment only.
+[`demo/Program.cs`](demo/README.md) is the Quick start as a console app you can run from a clone of this repository. It pings, reads account info, couriers, Thai postal areas and the store's parcels. It targets **sandbox** and is **read-only** unless you set `POSTWAY_DEMO_CREATE=1`, which also creates a sandbox parcel and saves its label. The token comes from process environment variables only; the demo never reads a `.env` file.
 
 ```bash
 POSTWAY_ACCESS_TOKEN=... dotnet run --project demo
@@ -224,12 +224,13 @@ The server reports errors as `{ code, isSuccess: false, message, data: null }` w
 | 404  | Public receipt token invalid                                                                    |
 | 500  | Server error; `Messages` is a generic text                                                      |
 
-`Code` in the body is **400 or 500**, not the HTTP status. Use `Status` to branch.
+`Code` in the body is **400 or 500**, not the HTTP status. Use `Status` to branch. `Messages` comes only from the JSON `message` field; a text body (an HTML error page, for example) stays in `Body`, and `Message` falls back to `HTTP <status>`.
 
-Two details keep error logs safe to keep:
+Three details keep error logs safe to keep:
 
 - `Url` is the **route template** (`…/receipt/public/:token`), not the URL that was sent. Receipt tokens, tracking numbers and refs never appear in `Url` or `Message`.
 - `Body` (the raw response text) is never part of `Message` or `ToString()`, and is `[JsonIgnore]`. Read `error.Body` explicitly when you need it.
+- A `PostwayRequestException` quotes the underlying exception in `Message` with the sent URL (or its path) replaced by the route template and the token by `[redacted]`, so an injected handler that names the URL it failed to reach leaks nothing. `InnerException` is the original exception, unchanged.
 
 `OrderShipments.CreateAsync` and `CancelAsync` can fail **with HTTP 201** and `isSuccess: false`, for example when verification or the courier rejects the parcel. The SDK turns that into `PostwayBusinessException`, so a completed task always means success.
 
@@ -269,13 +270,13 @@ public sealed class FileHttpResponse
 
 - **Transport**: `BaseUrl` must be `https://`; plain `http://` is accepted only for `localhost`, `127.0.0.1` and `[::1]`. URLs with credentials, a query string or a fragment are rejected.
 - **Headers**: `AccessToken`, `TokenType` and `UserAgent` are checked at construction (printable ASCII, no line breaks — including a trailing one) so a pasted token with a stray line break cannot inject headers or leak into an error message.
-- **Paths**: caller-supplied path parameters are percent-encoded (`Uri.EscapeDataString`) and may not be `null`, empty, `.` or `..`, so a bad input cannot reach a different endpoint.
+- **Paths**: caller-supplied path parameters are percent-encoded (`Uri.EscapeDataString`) and may not be `null`, empty, `.` or `..` or contain unpaired surrogates, so a bad input cannot reach a different endpoint or fail outside the SDK's exception types.
 - **Redirects** are refused: the SDK-owned handler has `AllowAutoRedirect = false`, any 3xx response throws `PostwayRequestException`, and so does a response an injected handler reached by following a redirect. The API never redirects, and following one could re-send `Authorization` elsewhere.
 - **Retries**: none, except one replay of an authenticated call after a 403 when `AccessTokenProvider` is set. Server errors, timeouts and network failures are never retried; `CreateAsync` is not idempotent.
 - **Provider tokens** from `AccessTokenProvider` pass the same header check before use. JWT claims are read only to time a refresh; neither tokens nor claims appear in exceptions.
 - **Errors** report route templates instead of parameter values, and response bodies stay out of messages and serialization (see [Errors](#errors)).
 - The SDK has **no runtime dependencies**, never logs, and never reads environment variables.
-- The access token is held in a private field and is only sent on authenticated routes (the provider is never called for public ones). Store it in a secret manager or user secrets, never in source control.
+- The access token is held in a private field and is only sent on authenticated routes (the provider is never called for public ones). Store it in user secrets (`dotnet user-secrets`) during development and in a secret manager in production; never commit it or keep it in a file inside the repository. A token that was ever committed must be rotated, because deleting the file does not revoke it.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

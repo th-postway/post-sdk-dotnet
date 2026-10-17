@@ -22,3 +22,8 @@ You will receive an acknowledgement within three business days. Confirmed issues
 - The SDK has no runtime dependencies, does not log, and does not read environment variables.
 
 If any of these do not hold, that is a vulnerability; please report it.
+
+## Handling credentials
+
+- Keep access tokens and client credentials in environment variables, user secrets (`dotnet user-secrets`) or a secret manager, never in tracked files. `.env` and `.env.*` are gitignored, but an ignore rule does not protect a file that is already tracked or added with `git add -f`.
+- If a token or client secret has been committed, pushed or shared, ask Postway to revoke and reissue it. Deleting the file, or rewriting history, does not invalidate a copy someone else already has.
